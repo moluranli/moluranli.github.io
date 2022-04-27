@@ -1,3 +1,13 @@
+---
+title: Shiro
+author: moluranli
+date: 2022-04-27
+category: Study
+layout: post
+---
+
+
+
 ## Shiro+Springboot实战
 
 [【编程不良人】2020最新版Shiro教程,整合SpringBoot项目实战教程_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV1uz4y197Zm?p=12&spm_id_from=pageDriver)
