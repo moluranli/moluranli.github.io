@@ -6,20 +6,18 @@ category: Study
 layout: post
 ---
 
-
-
-## Shiro+Springboot实战
+# 流程
 
 [【编程不良人】2020最新版Shiro教程,整合SpringBoot项目实战教程_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV1uz4y197Zm?p=12&spm_id_from=pageDriver)
 
 ![image-20220409222104049](https://s2.loli.net/2022/04/27/dA15W8iCvZbKcgt.png)
 
 
-## 项目
+# 项目
 
-### 一 注册加密md5+salt+hash散列
+## 一 注册加密md5+salt+hash散列
 
-#### 项目启动的目录为指定的html文件
+### 项目启动的目录为指定的html文件
 
 重写WebMvcConfigurer配置类里的addViewControllers方法,同时也可以使用相同的语法免action调用页面
 
@@ -40,7 +38,7 @@ public class MyWebConfigurer implements WebMvcConfigurer {
 
 
 
-#### ShiroConfig配置类
+### ShiroConfig配置类
 
 分别创建ShiroFilter,SecurityManager,Realm
 
@@ -88,7 +86,7 @@ public class ShiroConfig {
 
 
 
-#### 登录
+### 登录
 
 ```html
 <!DOCTYPE html>
@@ -109,7 +107,7 @@ public class ShiroConfig {
 
 
 
-#### 登录controller
+### 登录controller
 
 从SecurityUtils中获取Subject对象,使用subject中的login方法可以判断登录,因为login的参数为Token,所以要将用户名和密码封装成一个Toker,new UsernamePasswordToken(username,password),登录成功就可以访问资源页面
 
@@ -139,7 +137,7 @@ public String login(String username, String password){
 
 
 
-#### 数据库
+### 数据库
 
 
 
@@ -147,7 +145,7 @@ public String login(String username, String password){
 
 
 
-#### 注册
+### 注册
 
 ```html
 <form action="/user/registered">
@@ -159,7 +157,7 @@ public String login(String username, String password){
 
 
 
-#### 使用mybatis的insert
+### 使用mybatis的insert
 
 > @Options(useGeneratedKeys = true,keyProperty = "id",keyColumn = "id")使用自增策略时需要在数据库中也要设置Auto inc自增,否则会报错,没有id
 
@@ -175,7 +173,7 @@ public interface UserDao {
 
 
 
-#### Service层:md5+salt+hash散列
+### Service层:md5+salt+hash散列
 
 根据写的SaltUtils里的getsalt静态方法产生salt,saltutils的get方法就是传入一个int n,在指定char输入中进行一个n层的随机查找,然后返回,同时在save方法中将password和salt保存
 
@@ -192,7 +190,7 @@ public void save(User user) {
 
 
 
-#### 注册controller
+### 注册controller
 
 调用了Service的保存方法
 
@@ -211,9 +209,9 @@ public String registered(User user){
 
 
 
-### 二.登录验证
+## 二.登录验证
 
-#### 用户注册时
+### 用户注册时
 
 输入用户名以及密码,然后调用将密码加密后存入数据库中,
 
@@ -224,7 +222,7 @@ Md5Hash md5Hash = new Md5Hash(user.getPassword(),salt,1024);
 user.setPassword(md5Hash.toHex());//将加密后的密码存入
 ```
 
-#### 在进行登录之前
+### 在进行登录之前
 
 需要先告诉自定义realm使用的是md5加密以及散列的次数
 
@@ -235,13 +233,13 @@ credentialsMatcher.setHashIterations(1024);
 customerRealm.setCredentialsMatcher(credentialsMatcher);
 ```
 
-#### 在登录时
+### 在登录时
 
 ```java
 subject.login(new UsernamePasswordToken(username,password));
 ```
 
-#### 进行验证,会跳转到自定义的Realm中
+### 进行验证,会跳转到自定义的Realm中
 
 ```java
 String principal = (String) token.getPrincipal();
@@ -256,9 +254,9 @@ return null;
 
 ![image-20220410171915636](https://s2.loli.net/2022/04/27/6R5aqXxDevyntWM.png)
 
-### redis缓存处理
+## redis缓存处理
 
-#### 自定义realm开启缓存
+### 自定义realm开启缓存
 
 
 
@@ -288,7 +286,7 @@ public class RedisCacheManager implements CacheManager {
 
 
 
-#### Redis缓存实现类
+### Redis缓存实现类
 
 ```java
 public class RedisManager<K,V> implements Cache<K,V> {
@@ -351,9 +349,9 @@ public class RedisManager<K,V> implements Cache<K,V> {
 
 
 
-#### 使用RedisTemplate不能使用Authwired指定否则报错
+### 使用RedisTemplate
 
-需要使用工厂
+不能使用Authwired指定否则报错,需要使用工厂
 
 ```java
 @Component
@@ -374,7 +372,7 @@ public class ApplicationContextUtils implements ApplicationContextAware {
 
 
 
-#### 对salt也进行序列化
+### 对salt也进行序列化
 
 需要对salt进行序列化,否则会包序列化异常
 
