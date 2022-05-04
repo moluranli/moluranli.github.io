@@ -6,15 +6,19 @@ category: Study
 layout: post
 ---
 
-# Forum_Practice论坛项目
+# 简介
 
-## 简介
+## 依赖技术
 
-略
+![image-20220504102821998](https://s2.loli.net/2022/05/04/zUXVM2FS1yWElPb.png)
 
-## 阶段1:项目环境搭建
+## 开发环境
 
-### 导入依赖
+![image-20220504102911708](https://s2.loli.net/2022/05/04/fTzDZtREnVH8Kye.png)
+
+# 阶段1:项目环境搭建
+
+## 导入依赖
 
 ```xml
     <dependencies>
@@ -53,7 +57,7 @@ layout: post
     </dependencies>
 ```
 
-### application.properties文件
+## application.properties文件
 
 ```properties
 debug=true
@@ -68,9 +72,11 @@ spring.datasource.password=123
 
 
 
-## 阶段2:论坛首页开发
+# 阶段2:论坛首页开发
 
-### 要点
+## 要点
+
+### 配置文件
 
 ```properties
 #将驼峰命名法与属性匹配,不然数据库中含有_的字段查询出来是null
@@ -81,9 +87,54 @@ mybatis.mapper-locations=classpath:mapper/*.xml
 mybatis.type-aliases-package=com.example.forum_practice.entity
 ```
 
-### 数据库字段
+### 控制层
 
-#### discuss_post表
+使用List<Map<>>结构来存储帖子以及对应用户的集合,先拿出所有的帖子,然后在通过帖子查找每一用户,存入map中
+
+```java
+List<Map<String,Object>> discusspostuserlist = new ArrayList<>();
+```
+
+`new map()` 需要放在循环中,否则每次都会因为是同一个对象覆盖数据
+
+```java
+                Map<String,Object> map = new HashMap<>();
+                map.put("post",discussPost);
+                User user =userService.findUserById(discussPost.getUserid());
+                map.put("user",user);
+                discusspostuserlist.add(map);
+```
+
+传出page分页以及贴子和用户的包装
+
+```java
+        model.addAttribute("page",page);
+        model.addAttribute("discusspostuserlist",discusspostuserlist);
+```
+
+### 页面
+
+[utext和text的区别](https://blog.csdn.net/rongxiang111/article/details/79678765)使用utext可以解析html,比如br
+
+```html
+th:utext="${map.post.title}"
+```
+
+thymeleaf内嵌函数 
+
+`${#dates.format(map.post.createTime,'yyyy-MM-dd HH:mm:ss')}`  将date格式转换
+
+`${#numbers.sequence(page.upPage,page.downPage)}`  从uppage到downpage(包含边界)之间的数字以数组形式输出
+
+thymeleaf使用有动态和静态的属性处理 使用`|静态 动态|`
+
+```html
+th:class="|page-item ${page.current==i?'active':''}|"
+```
+
+## 数据库字段
+
+### discuss_post表
 
 > 文章表
 
@@ -103,7 +154,7 @@ CREATE TABLE `discuss_post` (
 ) ENGINE=InnoDB AUTO_INCREMENT=281 DEFAULT CHARSET=utf8
 ```
 
-#### User表
+### User表
 
 > 用户表
 
@@ -125,9 +176,9 @@ CREATE TABLE `user` (
 ) ENGINE=InnoDB AUTO_INCREMENT=150 DEFAULT CHARSET=utf8
 ```
 
-### Mapper文件
+## Mapper文件
 
-#### 文章mapper
+### 文章mapper
 
 ```xml
 <mapper namespace="com.example.forum_practice.dao.DiscussPostDao">
@@ -148,7 +199,7 @@ CREATE TABLE `user` (
 </mapper>
 ```
 
-#### 用户mapper
+### 用户mapper
 
 ```xml
 <mapper namespace="com.example.forum_practice.dao.UserDao">
