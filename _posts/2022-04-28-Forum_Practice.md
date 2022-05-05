@@ -76,6 +76,15 @@ spring.datasource.password=123
 
 ## 要点
 
+### 思路
+
+1. 根据数据库查出所有的帖子,然后根据每一个帖子查出帖子对应的用户信息
+2. 将每一个以Map存储的帖子+用户存入进入List中
+3. 创建一个Page类来实验分页,其中包含的属性包括:当前页码,每一页最大行数,总行数并且通过函数以及上述属性计算:起始行,最后一页的页码,并且得到当前页的前两页和后两页
+4. 在cotroller层中对page类的属性进行设置
+5. 将存储帖子和用户的List以及Page传入前端页面
+6. 使用thmeleaf对属性进行读取或设置比如`th:href="@{/(current=${page.current-1})}"`代表点击跳转下一页
+
 ### 配置文件
 
 ```properties
@@ -98,18 +107,18 @@ List<Map<String,Object>> discusspostuserlist = new ArrayList<>();
 `new map()` 需要放在循环中,否则每次都会因为是同一个对象覆盖数据
 
 ```java
-                Map<String,Object> map = new HashMap<>();
-                map.put("post",discussPost);
-                User user =userService.findUserById(discussPost.getUserid());
-                map.put("user",user);
-                discusspostuserlist.add(map);
+Map<String,Object> map = new HashMap<>();
+map.put("post",discussPost);
+User user =userService.findUserById(discussPost.getUserid());
+map.put("user",user);
+discusspostuserlist.add(map);
 ```
 
 传出page分页以及贴子和用户的包装
 
 ```java
-        model.addAttribute("page",page);
-        model.addAttribute("discusspostuserlist",discusspostuserlist);
+model.addAttribute("page",page);
+model.addAttribute("discusspostuserlist",discusspostuserlist);
 ```
 
 ### 页面
@@ -131,6 +140,18 @@ thymeleaf使用有动态和静态的属性处理 使用`|静态 动态|`
 ```html
 th:class="|page-item ${page.current==i?'active':''}|"
 ```
+
+thymeleaf代码复用
+
+```html
+<!--th:fragment 在含有代码的加入,起名header-->
+<header class="bg-dark sticky-top" th:fragment="header">
+    
+<!-- th:replace 表示复用名称为header的代码 -->
+<header class="bg-dark sticky-top" th:replace="index::header"></header>
+```
+
+
 
 ## 数据库字段
 
@@ -214,3 +235,8 @@ CREATE TABLE `user` (
 </mapper>
 ```
 
+# 阶段3:论坛注册
+
+## 要点
+
+### 
