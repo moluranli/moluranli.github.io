@@ -239,4 +239,117 @@ CREATE TABLE `user` (
 
 ## 要点
 
-### 
+### 思路
+
+1. 先在头部链接上加入注册页面的链接
+2. 用户输入信息后,控制层将拿到的User传入Service层
+3. 在Service层先判断User属性的合理性,是否为空,是否存在等,如果正常将会调用mapper保存数据,同时在产生Salt和md5密码时,使用UUId的随机数以及`DigestUtils.md5DigestAsHex(key.getBytes())`的md5加密,同时给定一个随机的图片和Code,设置状态为0,表示未激活.
+4. 在同一个函数中向用户发送模板邮件,发送信息,其中包含`String url = domin + "/activation/" + u.getId() + "/" + u.getActivationCode();的激活链接,domin为localhost://8080`
+5. 函数会返回一个包含错误信息的Map,如果Map为空表示没有错误,那么就会跳转到中间页面,中间页面为提示注册成功,已发送激活信息,如果Map不为空,就会返回到注册页面,并且工具Map中的信息来提示什么地方出现错误.
+6. 用户邮箱会收到邮件点击链接后,因为控制层有`@RequestMapping("/activation/{userId}/{code}")`会跳转到这个coltorller,然后调用Service层的激活方法,并且传递Userid和code激活码的参数,然后函数会根据userid查询用户,并且查看激活状态,此时有3种返回信息:1.激活码不相同或者没有这个用户,激活失败 2.激活状态已经为1,重复激活 3.激活成功,
+7. 然后控制层会根据激活的函数返回信息判断跳转的页面.
+
+### 配置文件
+
+```properties
+#可以回填数据
+mybatis.configuration.useGeneratedKeys=true
+
+#设置邮箱
+spring.mail.host=smtp.qq.com
+spring.mail.username=2285288446@qq.com
+spring.mail.password=kwybmouancpadjda
+spring.mail.protocol=smtps
+
+#forum自定义域名,激活链接url的前端部分
+forum.path.domin=http://localhost:8080
+```
+
+### 控制层
+
+这行代码会根据点击 `http://localhost:8080+"/activation/"+userid+"/"+code`跳转到此controller
+
+```java
+@RequestMapping("/activation/{userId}/{code}")
+```
+
+### Service层
+
+使用`mimeMessageHelper.setText(context,true);`可以让邮件可以识别html语言,为后面邮件模板使用
+
+## Mapper文件
+
+```xml
+    <select id="findUserByUserName" resultType="User">
+        select <include refid="select_user"/>
+        from user
+        where username = #{username}
+    </select>
+
+    <select id="findUserByEmail" resultType="User">
+        select <include refid="select_user"/>
+        from user
+        where email = #{email}
+    </select>
+
+    <insert id="saveUser" parameterType="User" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
+        insert into user(username,password,salt,email,type,status,activation_code,header_url,create_time)
+        values(#{username},#{password},#{salt},#{email},#{type},#{status},#{activationCode},#{headerUrl},#{createTime})
+    </insert>
+
+    <update id="updateUserActive">
+        update user
+        set status = 1
+        where id = #{userid}
+    </update>
+```
+
+## Utils类
+
+### 邮箱
+
+```java
+@Component
+public class MailClient {
+    private static final Logger logger = LoggerFactory.getLogger(MailClient.class);
+
+    @Autowired
+    private JavaMailSender javaMailSender;
+
+    @Value("${spring.mail.username}")
+    private String from;
+
+    public void sendMail(String to, String subject, String context){
+        MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+        MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage);
+        try {
+            mimeMessageHelper.setFrom(from);
+            mimeMessageHelper.setTo(to);
+            mimeMessageHelper.setSubject(subject);
+            mimeMessageHelper.setText(context,true);
+            javaMailSender.send(mimeMessageHelper.getMimeMessage());
+        } catch (MessagingException e) {
+            logger.error("发送邮件失败"+e.getMessage());
+        }
+    }
+}
+```
+
+### md5加密
+
+```java
+public class CommunityUtil {
+    //获取随机字符串
+    public static String getRandom(){
+        return UUID.randomUUID().toString().replaceAll("-","");
+    }
+
+    //md5加密
+    public static String md5Encrypt(String key){
+        if (StringUtils.isBlank(key)){
+            return null;
+        }
+        return DigestUtils.md5DigestAsHex(key.getBytes());
+    }
+}
+```
