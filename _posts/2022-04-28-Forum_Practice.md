@@ -356,3 +356,20 @@ public class CommunityUtil {
 
 # 阶段4:论坛登录
 
+# 要点
+
+### 思路
+
+- 验证码的实现
+
+1. 使用图片验证码生成工具kaptcha
+2. 写一个kaptchaConfig配置文件,其中包含一个方法,方法的返回值为Producer,并且其包含两个方法,一个是BufferedImage createImage(),另一个是String createText(),创建图片和创建随机字符,在此方法中配置防干扰等图片设置
+3. 在controller配置`@RequestMapping("/kaptcha")`访问路径,并且通过Producer的两个方法生成图片,并使用输出流和图片输入流产生图片,并将文本存入session中,使用`response.setContentType("image/png");`设置图片类型.
+
+- 登录验证
+
+1. 验证验证码(用户输入同session中存储的),验证用户名称,如果用户名存在,则通过用户名称查出用户,并且将验证用户的密码,如果都正确的话,则通过对登录凭证进行设置,并存入数据库中(后期更改到redis中),并将ticket存入map中,如果map中含有ticket,则将ticket存入cookie中,并且设置cookie的路径和过期时间等.
+
+- 拦截设置
+  - 对于登录凭证即ticket的拦截设置
+    1. 设置一个工具类
